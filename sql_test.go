@@ -81,7 +81,9 @@ func TestQuerySqlComplex(t *testing.T) {
 			panic(err)
 		}
 		fmt.Println("Id :", id)
-		fmt.Println("name :", name)
+		if name.Valid {
+			fmt.Println("name :", name.String)
+		}
 		fmt.Println("email :", email)
 		fmt.Println("balance :", balance)
 		fmt.Println("rating :", rating)
