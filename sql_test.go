@@ -16,8 +16,8 @@ func TestExecSql(t *testing.T) {
 
 	scriptsql := "INSERT INTO customer(id, name) VALUES('eko', 'Eko')"
 
-	// Exec : untuk operasi SQL yang tidak membutuhkan hasil
-	// Sedangkan, function untuk melakukan query ke database menggunakan QueryContext(context, sql, params)
+	// Exec Context : untuk operasi SQL yang tidak membutuhkan hasil
+	// Query Context :  function untuk melakukan query ke database menggunakan QueryContext(context, sql, params)
 	_, err := db.ExecContext(ctx, scriptsql)
 
 	if err != nil {
@@ -93,4 +93,91 @@ func TestQuerySqlComplex(t *testing.T) {
 	}
 
 	defer rows.Close()
+}
+
+func TestSqlInjection(t *testing.T) { // BAHAYA SQL INJECTION
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin';#"
+	password := "admin"
+
+	scriptsql := "SELECT username FROM user WHERE username = '" + username + "'  AND password = '" + password + "' LIMIT 1"
+	fmt.Println(scriptsql) // cek query
+	rows, err := db.QueryContext(ctx, scriptsql)
+
+	if err != nil {
+		panic(err)
+	}
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		rows.Scan(username)
+		fmt.Println("Sukses Login" + username)
+	} else {
+		fmt.Println("Gagal LOgin")
+	}
+
+	defer rows.Close()
+}
+
+func TestSqlInjectionSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "richo"
+	password := "richo123"
+
+	scriptsql := "SELECT username FROM user WHERE username = ?  AND password = ? LIMIT 1"
+	fmt.Println(scriptsql)                                           // cek query
+	rows, err := db.QueryContext(ctx, scriptsql, username, password) // menambahkan parameter ketiga di QueryContext
+
+	if err != nil {
+		panic(err)
+	}
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		rows.Scan(username)
+		fmt.Println("Sukses Login" + username)
+	} else {
+		fmt.Println("Gagal LOgin")
+	}
+
+	defer rows.Close()
+}
+
+// versi Exec
+func TestSqlExecSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	username := "richo"
+	password := "richo123"
+
+	ctx := context.Background()
+
+	scriptsql := "INSERT INTO user(username, password) VALUES(?, ?)"
+
+	// Exec Context : untuk operasi SQL yang tidak membutuhkan hasil
+	// Query Context :  function untuk melakukan query ke database menggunakan QueryContext(context, sql, params)
+	_, err := db.ExecContext(ctx, scriptsql, username, password)
+
+	if err != nil {
+		panic(err)
+	}
+
+	println("Success INSERT new user")
 }
