@@ -181,3 +181,30 @@ func TestSqlExecSafe(t *testing.T) {
 
 	println("Success INSERT new user")
 }
+
+func TestAutoIncrement(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	email := "richo@gmail.com"
+	comment := "halo saya berkomentar"
+
+	scriptsql := "INSERT INTO comments(email, comment) VALUES(?, ?)"
+
+	// Exec Context : untuk operasi SQL yang tidak membutuhkan hasil
+	// Query Context :  function untuk melakukan query ke database menggunakan QueryContext(context, sql, params)
+	result, err := db.ExecContext(ctx, scriptsql, email, comment)
+
+	if err != nil {
+		panic(err)
+	}
+	insertId, err := result.LastInsertId() // untuk cek last id
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Sukses menambahkan komentar", insertId)
+
+	println("Success INSERT new customer")
+}
